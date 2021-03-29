@@ -47,3 +47,5 @@ class MysqlDB {
     return util.promisify(this.connection.end).call(this.connection);
   }
 }
+
+module.exports = MysqlDB;

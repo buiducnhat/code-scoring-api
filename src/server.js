@@ -14,6 +14,7 @@ const app = express();
 
 app.use(cors());
 app.use(helmet());
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(
@@ -29,17 +30,20 @@ app.use('/healthz', (req, res) => {
 // error handler
 app.use(function (err, req, res, next) {
   // set locals, only providing error in development
-  res.locals.message = err.message
-  res.locals.error = req.app.get('env') === 'development' ? err : {}
+  res.locals.message = err.message;
+  res.locals.error = req.app.get('env') === 'development' ? err : {};
 
-  logger.error(`${err.status || 500} - ${err.message} - ${req.originalUrl} -${req.method} - ${req.ip}`)
+  logger.error(
+    `${err.status || 500} - ${err.message} - ${req.originalUrl} -${
+      req.method
+    } - ${req.ip}`
+  );
 
   // render the error page
-  res.status(err.status || 500)
+  res.status(err.status || 500);
   // res.render('error')
-  res.send(err)
-})
-
+  res.send(err);
+});
 
 const api = express.Router();
 app.use('/api', api);
@@ -47,5 +51,7 @@ app.use('/api', api);
 const apiV1 = express.Router();
 api.use('/v1', apiV1);
 
+const authApi = require('./apis/auth/auth.api');
+apiV1.use('/auth', authApi);
 
 module.exports = app;

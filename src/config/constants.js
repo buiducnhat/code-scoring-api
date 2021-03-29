@@ -1,3 +1,5 @@
+'use strict';
+
 exports.ROLE_ID = {
   admin: 1,
   user: 2,
@@ -18,4 +20,9 @@ exports.PERMISSION = {
   listExercises: 'list exercises',
   doExercise: 'do exercise',
   updateUser: 'update user',
+};
+
+exports.USER_STATUS = {
+  active: 1,
+  freezed: 2,
 };

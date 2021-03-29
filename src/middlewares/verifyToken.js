@@ -1,29 +1,31 @@
+'use strict';
+
 const jwt = require('jsonwebtoken');
+require('dotenv').config();
 
 const verifyToken = (req, res, next) => {
   const { authorization } = req.headers;
   if (!authorization) {
     return res.status(403).json({
-      success: false,
       message: 'Token is required',
     });
   }
   if (authorization.indexOf('Bearer ') !== 0) {
     return res.status(401).json({
-      success: false,
       message: 'Bearer token is required',
     });
   }
 
   const token = authorization.replace('Bearer ', '');
 
-  jwt.verify(token, process.env.SECRET, (err, decoded) => {
+  const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY || 'test';
+  jwt.verify(token, JWT_SECRET_KEY, (err, decoded) => {
     if (err) {
       return res
         .status(403)
         .json({ success: false, message: 'Not authenticated' });
     }
-    req.userId = decoded.id;
+    req.userId = decoded.userId;
     next();
   });
 };
