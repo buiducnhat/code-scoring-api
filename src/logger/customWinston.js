@@ -34,11 +34,7 @@ const appendTimestamp = format((info, opts) => {
 
 // instantiate a new Winston Logger with the settings defined above
 const logger = winston.createLogger({
-  format: format.combine(
-    format.timestamp(),
-    appendTimestamp({ tz: 'Asia/Ho_Chi_Minh' }),
-    myFormat
-  ),
+  format: format.combine(format.timestamp(), appendTimestamp({ tz: 'Asia/Ho_Chi_Minh' }), myFormat),
   transports: [
     new winston.transports.File(options.file),
     new winston.transports.Console(options.console),

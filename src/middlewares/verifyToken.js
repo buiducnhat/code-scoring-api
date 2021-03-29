@@ -21,9 +21,7 @@ const verifyToken = (req, res, next) => {
   const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY || 'test';
   jwt.verify(token, JWT_SECRET_KEY, (err, decoded) => {
     if (err) {
-      return res
-        .status(403)
-        .json({ success: false, message: 'Not authenticated' });
+      return res.status(403).json({ message: 'Not authenticated' });
     }
     req.userId = decoded.userId;
     next();

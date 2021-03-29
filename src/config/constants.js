@@ -26,3 +26,9 @@ exports.USER_STATUS = {
   active: 1,
   freezed: 2,
 };
+
+exports.EXERCISE_STATUS = {
+  public: 1,
+  hiden: 2,
+  deleted: 3,
+};
