@@ -3,10 +3,10 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
-const bodyParser = require('body-parser');
-const path = require('path');
+const appRootPath = require('app-root-path');
 const morgan = require('morgan');
-const dotenv = require('dotenv').config({ path: path.join(__dirname, '.env') });
+
+require('dotenv').config({ path: appRootPath.path + '/.env' });
 
 const logger = require('./logger');
 
@@ -52,6 +52,6 @@ api.use('/v1', apiV1);
 const authApi = require('./apis/auth/auth.api');
 const exerciseApi = require('./apis/exercise/exercise.api');
 apiV1.use('/auth', authApi);
-apiV1.use('/exercise', exerciseApi);
+apiV1.use('/exercises', exerciseApi);
 
 module.exports = app;

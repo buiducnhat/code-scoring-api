@@ -39,4 +39,30 @@ exerciseApi.post(
   }
 );
 
+exerciseApi.get('/list', (req, res) => {
+  const { page, pageSize, title, order } = req.query;
+  exerciseController
+    .listExercise({ page, pageSize, title, orderType: order })
+    .then((result) => res.status(200).json(result))
+    .catch((error) => res.status(error?.status || 500).json({ message: error?.message || error }));
+});
+
+exerciseApi.get('/detail/:exerciseId', (req, res) => {
+  const { exerciseId } = req.params;
+  exerciseController
+    .getExerciseDetail({ exerciseId })
+    .then((result) => res.status(200).json(result))
+    .catch((error) => res.status(error?.status || 500).json({ message: error?.message || error }));
+});
+
+exerciseApi.post('/submit/:exerciseId', verifyToken, (req, res) => {
+  const { userId } = req;
+  const { exerciseId } = req.params;
+  const { scriptCode, languageId } = req.body;
+  exerciseController
+    .submitExercise({ exerciseId, userId, scriptCode, languageId })
+    .then((result) => res.status(200).json(result))
+    .catch((error) => res.status(error?.status || 500).json({ message: error?.message || error }));
+});
+
 module.exports = exerciseApi;

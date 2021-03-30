@@ -9,7 +9,7 @@ exports.ORDER_TYPE = {
   timeASC: 1,
   timeDESC: 2,
   nameASC: 3,
-  nameDES: 4,
+  nameDESC: 4,
   pointASC: 5,
   pointDESC: 6,
 };
@@ -18,7 +18,7 @@ exports.PERMISSION = {
   createExercise: 'create exercise',
   updateExercise: 'update exercise',
   listExercises: 'list exercises',
-  doExercise: 'do exercise',
+  submitExercise: 'submit exercise',
   updateUser: 'update user',
 };
 

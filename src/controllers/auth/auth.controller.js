@@ -4,8 +4,6 @@ const bcrypt = require('bcryptjs');
 const mysql = require('mysql');
 const jwt = require('jsonwebtoken');
 
-require('dotenv').config();
-
 const { USER_STATUS } = require('../../config/constants');
 const logger = require('../../logger');
 
