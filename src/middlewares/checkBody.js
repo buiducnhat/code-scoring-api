@@ -7,11 +7,9 @@ const checkBody = (requiredFields) => (req, res, next) => {
     }
   });
   if (missingFields.length > 0) {
-    return res
-      .status(400)
-      .json({ message: `${missingFields.toString()} are required!!` });
+    return res.status(400).json({ message: `${missingFields.toString()} are required!!` });
   }
   next();
 };
 
-module.exports = checkBody;
+module.exports = Object.assign({}, { checkBody });

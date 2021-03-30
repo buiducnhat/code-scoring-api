@@ -22,9 +22,7 @@ class MysqlDB {
   }
 
   beginTransaction() {
-    return util
-      .promisify(this.connection.beginTransaction)
-      .call(this.connection);
+    return util.promisify(this.connection.beginTransaction).call(this.connection);
   }
 
   poolQuery(sql) {

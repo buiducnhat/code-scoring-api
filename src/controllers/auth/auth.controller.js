@@ -4,8 +4,6 @@ const bcrypt = require('bcryptjs');
 const mysql = require('mysql');
 const jwt = require('jsonwebtoken');
 
-require('dotenv').config();
-
 const { USER_STATUS } = require('../../config/constants');
 const logger = require('../../logger');
 
@@ -100,19 +98,14 @@ class AuthController {
         if (userFounded.is_delete === USER_STATUS.freezed) {
           return reject({
             status: 401,
-            message:
-              'Tài khoản hiện không thể đăng nhập, liên hệ Admin để biết thêm chi tiết',
+            message: 'Tài khoản hiện không thể đăng nhập, liên hệ Admin để biết thêm chi tiết',
           });
         }
 
         const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY || 'test';
-        const accessToken = jwt.sign(
-          { userId: userFounded.user_id },
-          JWT_SECRET_KEY,
-          {
-            expiresIn: '1d',
-          }
-        );
+        const accessToken = jwt.sign({ userId: userFounded.user_id }, JWT_SECRET_KEY, {
+          expiresIn: '1d',
+        });
 
         delete userFounded['password'];
 

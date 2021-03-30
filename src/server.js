@@ -3,10 +3,10 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
-const bodyParser = require('body-parser');
-const path = require('path');
+const appRootPath = require('app-root-path');
 const morgan = require('morgan');
-const dotenv = require('dotenv').config({ path: path.join(__dirname, '.env') });
+
+require('dotenv').config({ path: appRootPath.path + '/.env' });
 
 const logger = require('./logger');
 
@@ -34,9 +34,7 @@ app.use(function (err, req, res, next) {
   res.locals.error = req.app.get('env') === 'development' ? err : {};
 
   logger.error(
-    `${err.status || 500} - ${err.message} - ${req.originalUrl} -${
-      req.method
-    } - ${req.ip}`
+    `${err.status || 500} - ${err.message} - ${req.originalUrl} -${req.method} - ${req.ip}`
   );
 
   // render the error page
@@ -52,6 +50,8 @@ const apiV1 = express.Router();
 api.use('/v1', apiV1);
 
 const authApi = require('./apis/auth/auth.api');
+const exerciseApi = require('./apis/exercise/exercise.api');
 apiV1.use('/auth', authApi);
+apiV1.use('/exercises', exerciseApi);
 
 module.exports = app;
