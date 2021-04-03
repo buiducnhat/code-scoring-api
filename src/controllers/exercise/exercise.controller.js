@@ -193,7 +193,19 @@ class ExerciseController {
   submitExercise({ userId, exerciseId, scriptCode, codeFilePath, languageId }) {
     return new Promise(async (resolve, reject) => {
       try {
-        let query = `
+        let query = ``;
+
+        query = `
+          SELECT * from exercise
+          WHERE exercise_id = ${mysql.escape(exerciseId)}
+        `;
+        const exercisesFounded = await this.mysqlDb.poolQuery(query);
+        if (!exercisesFounded.length) {
+          return reject({ status: 404, message: 'Không tìm thấy bài tập này' });
+        }
+        const exerciseDetail = exercisesFounded[0];
+
+        query = `
           SELECT * FROM language 
           WHERE language_id = ${mysql.escape(languageId)}
         `;
@@ -203,33 +215,98 @@ class ExerciseController {
         }
         const languageCode = languagesFounded[0]?.name;
 
-        let result;
+        query = `
+          SELECT * FROM test_case 
+          WHERE exercise_id = ${mysql.escape(exerciseId)}
+        `;
+        let testCases = await this.mysqlDb.poolQuery(query);
+        let resultToInsert = ``;
 
+        for (let i = 0, len = testCases.length; i < len; i++) {
+          const runCodeResult = await this.runCodeByFile(languageCode, codeFilePath, testCases[i].input);
+          // compare output com runcode with output in db, then assign...
+          testCases[i].result = runCodeResult.stdout === testCases[i].output;
+
+          // value to insert into table result
+          if (i !== len - 1) {
+            resultToInsert += `(${mysql.escape(userId)}, 
+            ${mysql.escape(exerciseId)}, ${mysql.escape(testCases[i].test_case_id)},
+             ${mysql.escape(runCodeResult.stdout)},
+             ${testCases[i].result ? mysql.escape(exerciseDetail.point / len) : 0}), `;
+          } else {
+            resultToInsert += `(${mysql.escape(userId)}, 
+            ${mysql.escape(exerciseId)}, ${mysql.escape(testCases[i].test_case_id)},
+             ${mysql.escape(runCodeResult.stdout)},
+             ${testCases[i].result ? mysql.escape(exerciseDetail.point / len) : 0})`;
+          }
+        }
+
+        await fs.unlink(codeFilePath);
+
+        await this.mysqlDb.beginTransaction();
+
+        query = `
+          DELETE FROM result
+          WHERE user_id = ${userId} AND exercise_id = ${exerciseId}
+        `;
+        await this.mysqlDb.query(query);
+
+        query = `
+          INSERT INTO result(user_id, exercise_id, test_case_id, user_output, score)
+          VALUES ${resultToInsert}
+        `;
+        await this.mysqlDb.query(query);
+
+        await this.mysqlDb.commit();
+
+        return resolve('ok');
+      } catch (error) {
+        await this.mysqlDb.rollback();
+        logger.error(`[exercise.controller][submitExercise] error:`, error);
+        return reject(error?.sqlMessage || error);
+      }
+    });
+  }
+
+  runCodeByFile(languageCode, codeFilePath, input, limitedTime) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        let runCodeResult;
         switch (languageCode) {
           case LANGUAGE_CODE.c:
-            result = await c.runFile(codeFilePath, { stdin: '', compilationPath: 'gcc' });
+            runCodeResult = await c.runFile(codeFilePath, {
+              stdin: input,
+              compilationPath: 'gcc',
+              timeout: limitedTime,
+            });
             break;
           case LANGUAGE_CODE.cpp:
-            result = await cpp.runFile(codeFilePath, { stdin: '', compilationPath: 'g++' });
+            runCodeResult = await cpp.runFile(codeFilePath, {
+              stdin: input,
+              compilationPath: 'g++',
+              timeout: limitedTime,
+            });
             break;
           case LANGUAGE_CODE.java:
-            result = await java.runFile(codeFilePath, {
-              stdin: '',
+            runCodeResult = await java.runFile(codeFilePath, {
+              stdin: input,
               compilationPath: 'javac',
               executionPath: 'java',
+              timeout: limitedTime * 8,
             });
             break;
           case LANGUAGE_CODE.python:
-            result = await python.runFile(codeFilePath, { stdin: '', executionPath: 'python3' });
+            runCodeResult = await python.runFile(codeFilePath, {
+              stdin: input,
+              executionPath: 'python3',
+              timeout: limitedTime * 8,
+            });
             break;
         }
-        console.log(result);
-        await fs.unlink(codeFilePath);
-
-        return resolve(result);
+        return resolve(runCodeResult);
       } catch (error) {
-        logger.error(`[exercise.controller][submitExercise] error:`, error);
-        return reject(error?.sqlMessage || error);
+        logger.error(`[exercise.controller][runCode] error:`, error);
+        return reject(error);
       }
     });
   }

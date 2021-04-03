@@ -97,6 +97,7 @@ CREATE TABLE `result` (
   `exercise_id` int NOT NULL,
   `test_case_id` int NOT NULL,
   `user_output` longtext,
+  `score` int NOT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`result_id`),
   KEY `fk_user_has_exercise_exercise1_idx` (`exercise_id`),
