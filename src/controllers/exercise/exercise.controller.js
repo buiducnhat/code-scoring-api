@@ -1,13 +1,11 @@
 'use strict';
 
 const mysql = require('mysql');
-const axios = require('axios').default;
 
 const logger = require('../../logger');
-const { ORDER_TYPE } = require('../../config/constants');
-const compilerConfig = require('../../config/jdoodle');
-const { convertJsonScript } = require('../../utils/convertJsonScript');
-const fs = require('fs/promises')
+const { ORDER_TYPE, LANGUAGE_CODE } = require('../../config/constants');
+const { c, cpp, java, python } = require('compile-run');
+const fs = require('fs/promises');
 class ExerciseController {
   constructor(mysqlDb) {
     this.mysqlDb = mysqlDb;
@@ -127,7 +125,7 @@ class ExerciseController {
 
         const titleFilterQuery = title ? `WHERE title LIKE '%${title}%'` : '';
         let query = `
-          SELECT e.exercise_id, e.title, e.content, e.point, e.created_by, e.status, e.created_at,
+          SELECT e.exercise_id, e.title, e.content, e.point, e.created_by, e.status, e.created_at, e.updated_at,
           GROUP_CONCAT(l.name) AS language
           FROM exercise AS e
           JOIN user AS u ON e.created_by = u.user_id
@@ -192,7 +190,7 @@ class ExerciseController {
     });
   }
 
-  submitExercise({ userId, exerciseId, scriptCode, languageId }) {
+  submitExercise({ userId, exerciseId, scriptCode, codeFilePath, languageId }) {
     return new Promise(async (resolve, reject) => {
       try {
         let query = `
@@ -203,17 +201,34 @@ class ExerciseController {
         if (!languagesFounded.length) {
           return reject({ status: 400, message: 'Ngôn ngữ không phù hợp' });
         }
-        const languageCode = languagesFounded[0].language_code;
+        const languageCode = languagesFounded[0]?.name;
 
-        const dataTest = await fs.readFile(__dirname + '/tet.c')
-        const t = dataTest.toString()
-        
+        let result;
 
-        console.log(compiledResult.data);
+        switch (languageCode) {
+          case LANGUAGE_CODE.c:
+            result = await c.runFile(codeFilePath, { stdin: '', compilationPath: 'gcc' });
+            break;
+          case LANGUAGE_CODE.cpp:
+            result = await cpp.runFile(codeFilePath, { stdin: '', compilationPath: 'g++' });
+            break;
+          case LANGUAGE_CODE.java:
+            result = await java.runFile(codeFilePath, {
+              stdin: '',
+              compilationPath: 'javac',
+              executionPath: 'java',
+            });
+            break;
+          case LANGUAGE_CODE.python:
+            result = await python.runFile(codeFilePath, { stdin: '', executionPath: 'python3' });
+            break;
+        }
+        console.log(result);
+        await fs.unlink(codeFilePath);
 
-        return resolve(compiledResult.data);
+        return resolve(result);
       } catch (error) {
-        logger.error(`[exercise.controller][doExercise] error:`, error);
+        logger.error(`[exercise.controller][submitExercise] error:`, error);
         return reject(error?.sqlMessage || error);
       }
     });

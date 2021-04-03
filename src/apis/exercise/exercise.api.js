@@ -3,9 +3,7 @@
 const express = require('express');
 
 const { PERMISSION, EXERCISE_STATUS } = require('../../config/constants');
-const { verifyToken } = require('../../middlewares/verifyToken');
-const { checkBody } = require('../../middlewares/checkBody');
-const { checkPermission } = require('../../middlewares/checkPermission');
+const { verifyToken, checkBody, checkPermission, multerUpload } = require('../../middlewares/');
 const MysqlDB = require('../../model/mysql');
 const ExerciseController = require('../../controllers/exercise/exercise.controller');
 
@@ -55,12 +53,24 @@ exerciseApi.get('/detail/:exerciseId', (req, res) => {
     .catch((error) => res.status(error?.status || 500).json({ message: error?.message || error }));
 });
 
-exerciseApi.post('/submit/:exerciseId', verifyToken, (req, res) => {
+exerciseApi.post('/submit/:exerciseId', verifyToken, multerUpload.single('code'), (req, res) => {
   const { userId } = req;
+  const codeFile = req?.file;
   const { exerciseId } = req.params;
   const { scriptCode, languageId } = req.body;
+
+  if (!codeFile) {
+    return res.status(500).json({ message: 'Không tìm thấy file' });
+  }
+
   exerciseController
-    .submitExercise({ exerciseId, userId, scriptCode, languageId })
+    .submitExercise({
+      exerciseId,
+      userId,
+      scriptCode,
+      codeFilePath: codeFile.path,
+      languageId,
+    })
     .then((result) => res.status(200).json(result))
     .catch((error) => res.status(error?.status || 500).json({ message: error?.message || error }));
 });

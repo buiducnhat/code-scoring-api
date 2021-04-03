@@ -32,3 +32,10 @@ exports.EXERCISE_STATUS = {
   hiden: 2,
   deleted: 3,
 };
+
+exports.LANGUAGE_CODE = {
+  c: 'C',
+  cpp: 'C++',
+  java: 'Java',
+  python: 'Python',
+};
