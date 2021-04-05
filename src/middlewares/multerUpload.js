@@ -6,7 +6,8 @@ const multer = require('multer');
 const CODE_PATH = `${appRootPath}/src/assets/codes`;
 
 const codeFilter = (req, file, cb) => {
-  if (file.mimetype.includes('text')) {
+  console.log(file);
+  if (file.mimetype.includes('text') || file.mimetype.includes('application')) {
     cb(null, true);
   } else {
     cb({ message: 'Định dạng file không hợp lệ' }, false);

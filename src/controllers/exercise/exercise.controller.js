@@ -4,7 +4,7 @@ const mysql = require('mysql');
 
 const logger = require('../../logger');
 const { ORDER_TYPE, LANGUAGE_CODE } = require('../../config/constants');
-const { c, cpp, java, python } = require('compile-run');
+const { c, cpp, java, python, node } = require('compile-run');
 const fs = require('fs/promises');
 class ExerciseController {
   constructor(mysqlDb) {
@@ -223,7 +223,11 @@ class ExerciseController {
         let resultToInsert = ``;
 
         for (let i = 0, len = testCases.length; i < len; i++) {
-          const runCodeResult = await this.runCodeByFile(languageCode, codeFilePath, testCases[i].input);
+          const runCodeResult = await this.runCodeByFile(
+            languageCode,
+            codeFilePath,
+            testCases[i].input
+          );
           // compare output com runcode with output in db, then assign...
           testCases[i].result = runCodeResult.stdout === testCases[i].output;
 
@@ -241,6 +245,7 @@ class ExerciseController {
           }
         }
 
+        //remove file after uploaded
         await fs.unlink(codeFilePath);
 
         await this.mysqlDb.beginTransaction();
@@ -255,11 +260,14 @@ class ExerciseController {
           INSERT INTO result(user_id, exercise_id, test_case_id, user_output, score)
           VALUES ${resultToInsert}
         `;
-        await this.mysqlDb.query(query);
+        const result = await this.mysqlDb.query(query);
 
         await this.mysqlDb.commit();
 
-        return resolve('ok');
+        return resolve({
+          message: `Nộp bài giải thành công`,
+          exerciseId: exerciseId,
+        });
       } catch (error) {
         await this.mysqlDb.rollback();
         logger.error(`[exercise.controller][submitExercise] error:`, error);
@@ -299,6 +307,13 @@ class ExerciseController {
             runCodeResult = await python.runFile(codeFilePath, {
               stdin: input,
               executionPath: 'python3',
+              timeout: limitedTime * 8,
+            });
+            break;
+          case LANGUAGE_CODE.node:
+            runCodeResult = await node.runFile(codeFilePath, {
+              stdin: input,
+              executionPath: 'node',
               timeout: limitedTime * 8,
             });
             break;

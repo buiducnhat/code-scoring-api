@@ -38,4 +38,5 @@ exports.LANGUAGE_CODE = {
   cpp: 'C++',
   java: 'Java',
   python: 'Python',
+  node: 'NodeJs'
 };
