@@ -237,8 +237,8 @@ class ExerciseController {
         query = `
           DELETE FROM result
           WHERE exercise_id = ${mysql.escape(exerciseId)} 
-        `
-        await this.mysqlDb.query(query)
+        `;
+        await this.mysqlDb.query(query);
 
         // Delete all testcases before inserting new
         query = `
@@ -286,6 +286,27 @@ class ExerciseController {
       } catch (error) {
         await this.mysqlDb.rollback();
         logger.error(`[exercise.controller][updateExercise] error:`, error);
+        return reject(error?.sqlMessage || error);
+      }
+    });
+  }
+
+  updateExerciseStatus({ exerciseId, status }) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const query = `
+          UPDATE exercise 
+          SET status = ${mysql.escape(status)}
+          WHERE exercise_id = ${mysql.escape(exerciseId)}
+        `;
+        const result = await this.mysqlDb.poolQuery(query);
+
+        if (result.affectedRows === 0) {
+          return reject({ status: 404, message: `Không tìm thấy bài tập này` });
+        }
+
+        return resolve({ message: 'Ok' });
+      } catch (error) {
         return reject(error?.sqlMessage || error);
       }
     });
