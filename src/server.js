@@ -51,7 +51,9 @@ api.use('/v1', apiV1);
 
 const authApi = require('./apis/auth/auth.api');
 const exerciseApi = require('./apis/exercise/exercise.api');
+const resultApi = require('./apis/result/result.api');
 apiV1.use('/auth', authApi);
 apiV1.use('/exercises', exerciseApi);
+apiV1.use('/results', resultApi);
 
 module.exports = app;

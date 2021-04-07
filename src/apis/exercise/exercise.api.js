@@ -3,9 +3,7 @@
 const express = require('express');
 
 const { PERMISSION, EXERCISE_STATUS } = require('../../config/constants');
-const { verifyToken } = require('../../middlewares/verifyToken');
-const { checkBody } = require('../../middlewares/checkBody');
-const { checkPermission } = require('../../middlewares/checkPermission');
+const { verifyToken, checkBody, checkPermission, multerUpload } = require('../../middlewares/');
 const MysqlDB = require('../../model/mysql');
 const ExerciseController = require('../../controllers/exercise/exercise.controller');
 
@@ -55,14 +53,72 @@ exerciseApi.get('/detail/:exerciseId', (req, res) => {
     .catch((error) => res.status(error?.status || 500).json({ message: error?.message || error }));
 });
 
-exerciseApi.post('/submit/:exerciseId', verifyToken, (req, res) => {
+exerciseApi.post('/submit/:exerciseId', verifyToken, multerUpload.single('code'), (req, res) => {
   const { userId } = req;
+  const codeFile = req?.file;
   const { exerciseId } = req.params;
   const { scriptCode, languageId } = req.body;
+
+  if (!codeFile) {
+    return res.status(500).json({ message: 'Không tìm thấy file' });
+  }
+
   exerciseController
-    .submitExercise({ exerciseId, userId, scriptCode, languageId })
+    .submitExercise({
+      exerciseId,
+      userId,
+      scriptCode,
+      codeFilePath: codeFile.path,
+      languageId,
+    })
     .then((result) => res.status(200).json(result))
     .catch((error) => res.status(error?.status || 500).json({ message: error?.message || error }));
 });
+
+exerciseApi.put(
+  '/update/:exerciseId',
+  verifyToken,
+  checkPermission(mysqlDb, PERMISSION.updateExercise),
+  checkBody(['title', 'content', 'point', 'testCases', 'languages']),
+  (req, res) => {
+    const createdBy = req?.userId;
+    const { exerciseId } = req.params;
+    const { title, content, point, testCases, status, languages } = req.body;
+
+    exerciseController
+      .updateExercise({
+        exerciseId,
+        title,
+        content,
+        point,
+        createdBy,
+        testCases,
+        status: status || EXERCISE_STATUS.hiden,
+        languages,
+      })
+      .then((result) => res.status(200).json(result))
+      .catch((error) =>
+        res.status(error?.status || 500).json({ message: error?.message || error })
+      );
+  }
+);
+
+exerciseApi.post(
+  '/status/:exerciseId',
+  verifyToken,
+  checkPermission(mysqlDb, PERMISSION.updateExercise),
+  checkBody(['status']),
+  (req, res) => {
+    const { exerciseId } = req.params;
+    const { status } = req.body || EXERCISE_STATUS.hiden;
+
+    exerciseController
+      .updateExerciseStatus({ exerciseId, status })
+      .then((result) => res.status(200).json(result))
+      .catch((error) =>
+        res.status(error?.status || 500).json({ message: error?.message || error })
+      );
+  }
+);
 
 module.exports = exerciseApi;

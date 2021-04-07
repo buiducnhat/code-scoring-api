@@ -1,13 +1,11 @@
 'use strict';
 
 const mysql = require('mysql');
-const axios = require('axios').default;
 
 const logger = require('../../logger');
-const { ORDER_TYPE } = require('../../config/constants');
-const compilerConfig = require('../../config/jdoodle');
-const { convertJsonScript } = require('../../utils/convertJsonScript');
-const fs = require('fs/promises')
+const { ORDER_TYPE, LANGUAGE_CODE } = require('../../config/constants');
+const { c, cpp, java, python, node } = require('compile-run');
+const fs = require('fs/promises');
 class ExerciseController {
   constructor(mysqlDb) {
     this.mysqlDb = mysqlDb;
@@ -127,7 +125,7 @@ class ExerciseController {
 
         const titleFilterQuery = title ? `WHERE title LIKE '%${title}%'` : '';
         let query = `
-          SELECT e.exercise_id, e.title, e.content, e.point, e.created_by, e.status, e.created_at,
+          SELECT e.exercise_id, e.title, e.content, e.point, e.created_by, e.status, e.created_at, e.updated_at,
           GROUP_CONCAT(l.name) AS language
           FROM exercise AS e
           JOIN user AS u ON e.created_by = u.user_id
@@ -192,10 +190,144 @@ class ExerciseController {
     });
   }
 
-  submitExercise({ userId, exerciseId, scriptCode, languageId }) {
+  updateExercise({ exerciseId, title, content, point, createdBy, status, testCases, languages }) {
     return new Promise(async (resolve, reject) => {
       try {
-        let query = `
+        await this.mysqlDb.beginTransaction();
+
+        let query = ``;
+
+        query = `
+          UPDATE exercise SET
+          title = ${mysql.escape(title)},
+          content = ${mysql.escape(content)},
+          point = ${mysql.escape(point)},
+          created_by = ${mysql.escape(createdBy)},
+          status = ${mysql.escape(status)}
+          WHERE exercise_id = ${mysql.escape(exerciseId)}
+        `;
+        const updatedExerciseResult = await this.mysqlDb.query(query);
+        if (updatedExerciseResult.affectedRows === 0) {
+          return reject({ status: 404, message: `Bài tập không tồn tại` });
+        }
+
+        // delete all language-exercise before inserting news
+        query = `
+          DELETE FROM exercise_has_language
+          WHERE exercise_id = ${mysql.escape(exerciseId)}
+        `;
+        await this.mysqlDb.query(query);
+
+        // Insert into table exercise_has_language
+        let exerciseLanguageValue = ``;
+        languages.forEach((languageId, index) => {
+          if (index !== languages.length - 1) {
+            exerciseLanguageValue += `(${mysql.escape(exerciseId)}, ${mysql.escape(languageId)}), `;
+          } else {
+            exerciseLanguageValue += `(${mysql.escape(exerciseId)}, ${mysql.escape(languageId)})`;
+          }
+        });
+        query = `
+          INSERT INTO exercise_has_language(exercise_id, language_id)
+          VALUES ${exerciseLanguageValue}
+        `;
+        await this.mysqlDb.query(query);
+
+        // Delete all results
+        query = `
+          DELETE FROM result
+          WHERE exercise_id = ${mysql.escape(exerciseId)} 
+        `;
+        await this.mysqlDb.query(query);
+
+        // Delete all testcases before inserting new
+        query = `
+          DELETE FROM test_case
+          WHERE exercise_id = ${mysql.escape(exerciseId)}
+        `;
+        await this.mysqlDb.query(query);
+
+        // Insert test cases query
+        let testCasesValue = ``;
+        testCases.forEach((testCase, index) => {
+          if (index !== testCases.length - 1) {
+            testCasesValue += `(${mysql.escape(index + 1)},${mysql.escape(
+              testCase.input
+            )}, ${mysql.escape(testCase.output)},${mysql.escape(
+              testCase?.limitedTime
+            )}, ${mysql.escape(exerciseId)}), `;
+          } else {
+            testCasesValue += `(${mysql.escape(index + 1)},${mysql.escape(
+              testCase.input
+            )}, ${mysql.escape(testCase.output)},${mysql.escape(
+              testCase?.limitedTime
+            )}, ${mysql.escape(exerciseId)})`;
+          }
+        });
+        // Insert new testcases
+        query = `
+          INSERT INTO test_case(test_case_index, input, output, limited_time, exercise_id)
+          VALUES ${testCasesValue}
+        `;
+        await this.mysqlDb.query(query);
+
+        await this.mysqlDb.commit();
+
+        return resolve({
+          exerciseId,
+          title,
+          content,
+          point,
+          createdBy,
+          status,
+          testCases,
+          languages,
+        });
+      } catch (error) {
+        await this.mysqlDb.rollback();
+        logger.error(`[exercise.controller][updateExercise] error:`, error);
+        return reject(error?.sqlMessage || error);
+      }
+    });
+  }
+
+  updateExerciseStatus({ exerciseId, status }) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const query = `
+          UPDATE exercise 
+          SET status = ${mysql.escape(status)}
+          WHERE exercise_id = ${mysql.escape(exerciseId)}
+        `;
+        const result = await this.mysqlDb.poolQuery(query);
+
+        if (result.affectedRows === 0) {
+          return reject({ status: 404, message: `Không tìm thấy bài tập này` });
+        }
+
+        return resolve({ message: 'Ok' });
+      } catch (error) {
+        return reject(error?.sqlMessage || error);
+      }
+    });
+  }
+
+  submitExercise({ userId, exerciseId, scriptCode, codeFilePath, languageId }) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        let query = ``;
+
+        query = `
+          SELECT * from exercise
+          WHERE exercise_id = ${mysql.escape(exerciseId)}
+        `;
+        const exercisesFounded = await this.mysqlDb.poolQuery(query);
+        if (!exercisesFounded.length) {
+          return reject({ status: 404, message: 'Không tìm thấy bài tập này' });
+        }
+        const exerciseDetail = exercisesFounded[0];
+
+        query = `
           SELECT * FROM language 
           WHERE language_id = ${mysql.escape(languageId)}
         `;
@@ -203,18 +335,115 @@ class ExerciseController {
         if (!languagesFounded.length) {
           return reject({ status: 400, message: 'Ngôn ngữ không phù hợp' });
         }
-        const languageCode = languagesFounded[0].language_code;
+        const languageCode = languagesFounded[0]?.name;
 
-        const dataTest = await fs.readFile(__dirname + '/tet.c')
-        const t = dataTest.toString()
-        
+        query = `
+          SELECT * FROM test_case 
+          WHERE exercise_id = ${mysql.escape(exerciseId)}
+        `;
+        let testCases = await this.mysqlDb.poolQuery(query);
+        let resultToInsert = ``;
 
-        console.log(compiledResult.data);
+        for (let i = 0, len = testCases.length; i < len; i++) {
+          const runCodeResult = await this.runCodeByFile(
+            languageCode,
+            codeFilePath,
+            testCases[i].input
+          );
+          // compare output com runcode with output in db, then assign...
+          testCases[i].result = runCodeResult.stdout === testCases[i].output;
 
-        return resolve(compiledResult.data);
+          // value to insert into table result
+          if (i !== len - 1) {
+            resultToInsert += `(${mysql.escape(userId)}, 
+            ${mysql.escape(exerciseId)}, ${mysql.escape(testCases[i].test_case_id)},
+             ${mysql.escape(runCodeResult.stdout)},
+             ${testCases[i].result ? mysql.escape(exerciseDetail.point / len) : 0}), `;
+          } else {
+            resultToInsert += `(${mysql.escape(userId)}, 
+            ${mysql.escape(exerciseId)}, ${mysql.escape(testCases[i].test_case_id)},
+             ${mysql.escape(runCodeResult.stdout)},
+             ${testCases[i].result ? mysql.escape(exerciseDetail.point / len) : 0})`;
+          }
+        }
+
+        //remove file after uploaded
+        await fs.unlink(codeFilePath);
+
+        await this.mysqlDb.beginTransaction();
+
+        query = `
+          DELETE FROM result
+          WHERE user_id = ${userId} AND exercise_id = ${exerciseId}
+        `;
+        await this.mysqlDb.query(query);
+
+        query = `
+          INSERT INTO result(user_id, exercise_id, test_case_id, user_output, score)
+          VALUES ${resultToInsert}
+        `;
+        const result = await this.mysqlDb.query(query);
+
+        await this.mysqlDb.commit();
+
+        return resolve({
+          message: `Nộp bài giải thành công`,
+          exerciseId: exerciseId,
+        });
       } catch (error) {
-        logger.error(`[exercise.controller][doExercise] error:`, error);
+        await this.mysqlDb.rollback();
+        logger.error(`[exercise.controller][submitExercise] error:`, error);
         return reject(error?.sqlMessage || error);
+      }
+    });
+  }
+
+  runCodeByFile(languageCode, codeFilePath, input, limitedTime) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        let runCodeResult;
+        switch (languageCode) {
+          case LANGUAGE_CODE.c:
+            runCodeResult = await c.runFile(codeFilePath, {
+              stdin: input,
+              compilationPath: 'gcc',
+              timeout: limitedTime,
+            });
+            break;
+          case LANGUAGE_CODE.cpp:
+            runCodeResult = await cpp.runFile(codeFilePath, {
+              stdin: input,
+              compilationPath: 'g++',
+              timeout: limitedTime,
+            });
+            break;
+          case LANGUAGE_CODE.java:
+            runCodeResult = await java.runFile(codeFilePath, {
+              stdin: input,
+              compilationPath: 'javac',
+              executionPath: 'java',
+              timeout: limitedTime * 8,
+            });
+            break;
+          case LANGUAGE_CODE.python:
+            runCodeResult = await python.runFile(codeFilePath, {
+              stdin: input,
+              executionPath: 'python3',
+              timeout: limitedTime * 8,
+            });
+            break;
+          case LANGUAGE_CODE.node:
+            runCodeResult = await node.runFile(codeFilePath, {
+              stdin: input,
+              executionPath: 'node',
+              timeout: limitedTime * 8,
+            });
+            break;
+        }
+        return resolve(runCodeResult);
+      } catch (error) {
+        logger.error(`[exercise.controller][runCode] error:`, error);
+        return reject(error);
       }
     });
   }
