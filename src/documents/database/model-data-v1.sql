@@ -39,7 +39,7 @@ UNLOCK TABLES;
 
 LOCK TABLES `language` WRITE;
 /*!40000 ALTER TABLE `language` DISABLE KEYS */;
-INSERT INTO `language` VALUES (1,'C'),(2,'C++'),(4,'Java'),(3,'Python');
+INSERT INTO `language` VALUES (1,'C'),(2,'C++'),(3,'Python'),(4,'Java'),(5, 'NodeJs');
 /*!40000 ALTER TABLE `language` ENABLE KEYS */;
 UNLOCK TABLES;
 

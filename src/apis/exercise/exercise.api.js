@@ -75,4 +75,32 @@ exerciseApi.post('/submit/:exerciseId', verifyToken, multerUpload.single('code')
     .catch((error) => res.status(error?.status || 500).json({ message: error?.message || error }));
 });
 
+exerciseApi.put(
+  '/update/:exerciseId',
+  verifyToken,
+  checkPermission(mysqlDb, PERMISSION.updateExercise),
+  checkBody(['title', 'content', 'point', 'testCases', 'languages']),
+  (req, res) => {
+    const createdBy = req?.userId;
+    const { exerciseId } = req.params;
+    const { title, content, point, testCases, status, languages } = req.body;
+
+    exerciseController
+      .updateExercise({
+        exerciseId,
+        title,
+        content,
+        point,
+        createdBy,
+        testCases,
+        status: status || EXERCISE_STATUS.public,
+        languages,
+      })
+      .then((result) => res.status(200).json(result))
+      .catch((error) =>
+        res.status(error?.status || 500).json({ message: error?.message || error })
+      );
+  }
+);
+
 module.exports = exerciseApi;

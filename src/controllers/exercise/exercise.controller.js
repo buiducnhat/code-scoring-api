@@ -190,6 +190,107 @@ class ExerciseController {
     });
   }
 
+  updateExercise({ exerciseId, title, content, point, createdBy, status, testCases, languages }) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        await this.mysqlDb.beginTransaction();
+
+        let query = ``;
+
+        query = `
+          UPDATE exercise SET
+          title = ${mysql.escape(title)},
+          content = ${mysql.escape(content)},
+          point = ${mysql.escape(point)},
+          created_by = ${mysql.escape(createdBy)},
+          status = ${mysql.escape(status)}
+          WHERE exercise_id = ${mysql.escape(exerciseId)}
+        `;
+        const updatedExerciseResult = await this.mysqlDb.query(query);
+        if (updatedExerciseResult.affectedRows === 0) {
+          return reject({ status: 404, message: `Bài tập không tồn tại` });
+        }
+
+        // delete all language-exercise before inserting news
+        query = `
+          DELETE FROM exercise_has_language
+          WHERE exercise_id = ${mysql.escape(exerciseId)}
+        `;
+        await this.mysqlDb.query(query);
+
+        // Insert into table exercise_has_language
+        let exerciseLanguageValue = ``;
+        languages.forEach((languageId, index) => {
+          if (index !== languages.length - 1) {
+            exerciseLanguageValue += `(${mysql.escape(exerciseId)}, ${mysql.escape(languageId)}), `;
+          } else {
+            exerciseLanguageValue += `(${mysql.escape(exerciseId)}, ${mysql.escape(languageId)})`;
+          }
+        });
+        query = `
+          INSERT INTO exercise_has_language(exercise_id, language_id)
+          VALUES ${exerciseLanguageValue}
+        `;
+        await this.mysqlDb.query(query);
+
+        // Delete all results
+        query = `
+          DELETE FROM result
+          WHERE exercise_id = ${mysql.escape(exerciseId)} 
+        `
+        await this.mysqlDb.query(query)
+
+        // Delete all testcases before inserting new
+        query = `
+          DELETE FROM test_case
+          WHERE exercise_id = ${mysql.escape(exerciseId)}
+        `;
+        await this.mysqlDb.query(query);
+
+        // Insert test cases query
+        let testCasesValue = ``;
+        testCases.forEach((testCase, index) => {
+          if (index !== testCases.length - 1) {
+            testCasesValue += `(${mysql.escape(index + 1)},${mysql.escape(
+              testCase.input
+            )}, ${mysql.escape(testCase.output)},${mysql.escape(
+              testCase?.limitedTime
+            )}, ${mysql.escape(exerciseId)}), `;
+          } else {
+            testCasesValue += `(${mysql.escape(index + 1)},${mysql.escape(
+              testCase.input
+            )}, ${mysql.escape(testCase.output)},${mysql.escape(
+              testCase?.limitedTime
+            )}, ${mysql.escape(exerciseId)})`;
+          }
+        });
+        // Insert new testcases
+        query = `
+          INSERT INTO test_case(test_case_index, input, output, limited_time, exercise_id)
+          VALUES ${testCasesValue}
+        `;
+        await this.mysqlDb.query(query);
+
+        await this.mysqlDb.commit();
+
+        return resolve({
+          exerciseId,
+          title,
+          content,
+          point,
+          createdBy,
+          status,
+          testCases,
+          languages,
+        });
+      } catch (error) {
+        await this.mysqlDb.rollback();
+        logger.error(`[exercise.controller][updateExercise] error:`, error);
+        return reject(error?.sqlMessage || error);
+      }
+    });
+  }
+
   submitExercise({ userId, exerciseId, scriptCode, codeFilePath, languageId }) {
     return new Promise(async (resolve, reject) => {
       try {
