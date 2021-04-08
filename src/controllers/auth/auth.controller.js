@@ -37,6 +37,8 @@ class AuthController {
     return new Promise(async (resolve, reject) => {
       try {
         const hashedPassword = bcrypt.hashSync(password, 8);
+        avatar =
+          avatar || `https://ui-avatars.com/api/?size=128&name=${mysql.escape(name).split(`'`)[1]}`;
 
         const query = `
           INSERT INTO user(email, name, password, avatar, role_id, is_delete)
