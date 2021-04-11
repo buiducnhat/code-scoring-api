@@ -8,7 +8,7 @@ const development = {
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'gerpan',
     password: process.env.DB_PASS || 'Devzone2021@',
-    database: process.env.DB_DBNAME || 'code-scoring',
+    database: process.env.DB_DBNAME || 'code_scoring',
 
     pool: {
       max: 5,
