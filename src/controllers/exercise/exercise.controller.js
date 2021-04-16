@@ -312,7 +312,14 @@ class ExerciseController {
     });
   }
 
-  submitExercise({ userId, exerciseId, scriptCode, codeFilePath, languageId, typeRunOrSubmit }) {
+  runOrSubmitExercise({
+    userId,
+    exerciseId,
+    scriptCode,
+    codeFilePath,
+    languageId,
+    typeRunOrSubmit,
+  }) {
     return new Promise(async (resolve, reject) => {
       try {
         let query = ``;
@@ -345,6 +352,7 @@ class ExerciseController {
         let resultRunTestCases = [];
         let resultToInsert = ``;
         let totalScore = 0;
+        const scorePerTestCase = exerciseDetail.point / testCases.length;
 
         for (let i = 0, len = testCases.length; i < len; i++) {
           const runCodeResult = await this.runCodeByFile(
@@ -354,6 +362,7 @@ class ExerciseController {
           );
           // compare output com runcode with output in db, then assign...
           testCases[i].result = runCodeResult.stdout === testCases[i].output;
+          totalScore += testCases[i].result ? scorePerTestCase : 0;
 
           // push to resultRunTestCases array
           resultRunTestCases.push({
@@ -368,13 +377,11 @@ class ExerciseController {
           resultToInsert += `(${mysql.escape(userId)}, 
             ${mysql.escape(exerciseId)}, ${mysql.escape(testCases[i].test_case_id)},
              ${mysql.escape(runCodeResult.stdout)},
-             ${testCases[i].result ? mysql.escape(exerciseDetail.point / len) : 0})`;
+             ${testCases[i].result ? mysql.escape(scorePerTestCase) : 0})`;
           if (i !== len - 1) {
             resultToInsert += `,`;
           }
         }
-        console.log(testCases.slice(0, Math.floor(testCases.length / 2)));
-
         //remove file after uploaded
         await fs.unlink(codeFilePath);
 
@@ -405,7 +412,7 @@ class ExerciseController {
 
         return resolve({
           message: `Nộp bài giải thành công`,
-          exerciseId: exerciseId,
+          totalScore,
         });
       } catch (error) {
         await this.mysqlDb.rollback();
