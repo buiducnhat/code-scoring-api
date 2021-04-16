@@ -38,5 +38,10 @@ exports.LANGUAGE_CODE = {
   cpp: 'C++',
   java: 'Java',
   python: 'Python',
-  node: 'NodeJs'
+  node: 'NodeJs',
+};
+
+exports.RUN_SUBMIT_EXERCISE_TYPE = {
+  run: 1,
+  submit: 2,
 };

@@ -3,7 +3,7 @@
 const mysql = require('mysql');
 
 const logger = require('../../logger');
-const { ORDER_TYPE, LANGUAGE_CODE } = require('../../config/constants');
+const { ORDER_TYPE, LANGUAGE_CODE, RUN_SUBMIT_EXERCISE_TYPE } = require('../../config/constants');
 const { c, cpp, java, python, node } = require('compile-run');
 const fs = require('fs/promises');
 class ExerciseController {
@@ -312,7 +312,7 @@ class ExerciseController {
     });
   }
 
-  submitExercise({ userId, exerciseId, scriptCode, codeFilePath, languageId }) {
+  submitExercise({ userId, exerciseId, scriptCode, codeFilePath, languageId, typeRunOrSubmit }) {
     return new Promise(async (resolve, reject) => {
       try {
         let query = ``;
@@ -342,7 +342,9 @@ class ExerciseController {
           WHERE exercise_id = ${mysql.escape(exerciseId)}
         `;
         let testCases = await this.mysqlDb.poolQuery(query);
+        let resultRunTestCases = [];
         let resultToInsert = ``;
+        let totalScore = 0;
 
         for (let i = 0, len = testCases.length; i < len; i++) {
           const runCodeResult = await this.runCodeByFile(
@@ -353,37 +355,52 @@ class ExerciseController {
           // compare output com runcode with output in db, then assign...
           testCases[i].result = runCodeResult.stdout === testCases[i].output;
 
+          // push to resultRunTestCases array
+          resultRunTestCases.push({
+            input: testCases[i].input,
+            expectedOutput: testCases[i].output,
+            userOutput: runCodeResult.stdout,
+            error: runCodeResult.stderr || null,
+            result: testCases[i].result,
+          });
+
           // value to insert into table result
-          if (i !== len - 1) {
-            resultToInsert += `(${mysql.escape(userId)}, 
-            ${mysql.escape(exerciseId)}, ${mysql.escape(testCases[i].test_case_id)},
-             ${mysql.escape(runCodeResult.stdout)},
-             ${testCases[i].result ? mysql.escape(exerciseDetail.point / len) : 0}), `;
-          } else {
-            resultToInsert += `(${mysql.escape(userId)}, 
+          resultToInsert += `(${mysql.escape(userId)}, 
             ${mysql.escape(exerciseId)}, ${mysql.escape(testCases[i].test_case_id)},
              ${mysql.escape(runCodeResult.stdout)},
              ${testCases[i].result ? mysql.escape(exerciseDetail.point / len) : 0})`;
+          if (i !== len - 1) {
+            resultToInsert += `,`;
           }
         }
+        console.log(testCases.slice(0, Math.floor(testCases.length / 2)));
 
         //remove file after uploaded
         await fs.unlink(codeFilePath);
 
+        // If type is just run code, resolve here
+        if (typeRunOrSubmit === RUN_SUBMIT_EXERCISE_TYPE.run) {
+          return resolve(resultRunTestCases.slice(0, Math.floor(resultRunTestCases.length / 2)));
+        }
+
+        // Begin transaction
         await this.mysqlDb.beginTransaction();
 
+        // Delete all result before inserting new
         query = `
           DELETE FROM result
           WHERE user_id = ${userId} AND exercise_id = ${exerciseId}
         `;
         await this.mysqlDb.query(query);
 
+        // Insert result to table result
         query = `
           INSERT INTO result(user_id, exercise_id, test_case_id, user_output, score)
           VALUES ${resultToInsert}
         `;
-        const result = await this.mysqlDb.query(query);
+        await this.mysqlDb.query(query);
 
+        // Commit transacrion
         await this.mysqlDb.commit();
 
         return resolve({

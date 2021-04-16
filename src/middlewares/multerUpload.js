@@ -6,7 +6,6 @@ const multer = require('multer');
 const CODE_PATH = `${appRootPath}/src/assets/codes`;
 
 const codeFilter = (req, file, cb) => {
-  console.log(file);
   if (file.mimetype.includes('text') || file.mimetype.includes('application')) {
     cb(null, true);
   } else {
