@@ -64,7 +64,7 @@ exerciseApi.post('/run/:exerciseId', verifyToken, multerUpload.single('code'), (
   }
 
   exerciseController
-    .submitExercise({
+    .runOrSubmitExercise({
       exerciseId,
       userId,
       scriptCode,
@@ -87,7 +87,7 @@ exerciseApi.post('/submit/:exerciseId', verifyToken, multerUpload.single('code')
   }
 
   exerciseController
-    .submitExercise({
+    .runOrSubmitExercise({
       exerciseId,
       userId,
       scriptCode,
