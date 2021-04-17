@@ -15,7 +15,7 @@ class LanguageController {
         const query = `
 					SELECT * FROM language
 				`;
-        const languagesFounded = await this.mysqlDb.pQuery(query);
+        const languagesFounded = await this.mysqlDb.poolQuery(query);
 
         return resolve(languagesFounded);
       } catch (error) {
