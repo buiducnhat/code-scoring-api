@@ -126,7 +126,7 @@ class ExerciseController {
         const titleFilterQuery = title ? `WHERE title LIKE '%${title}%'` : '';
         let query = `
           SELECT e.exercise_id, e.title, e.content, e.point, e.created_by, e.status, e.created_at, e.updated_at,
-          GROUP_CONCAT(l.name) AS language
+          u.name AS author, GROUP_CONCAT(l.name) AS language
           FROM exercise AS e
           JOIN user AS u ON e.created_by = u.user_id
           JOIN exercise_has_language AS ehl ON e.exercise_id = ehl.exercise_id
@@ -152,7 +152,7 @@ class ExerciseController {
       try {
         let query = `
           SELECT e.exercise_id, e.title, e.content, e.point, e.created_by, e.status, e.created_at,
-          e.updated_at, GROUP_CONCAT(l.name) AS language
+          u.name AS author, e.updated_at, GROUP_CONCAT(l.name) AS language
           FROM exercise AS e
           JOIN user AS u ON e.created_by = u.user_id
           JOIN exercise_has_language AS ehl ON e.exercise_id = ehl.exercise_id
