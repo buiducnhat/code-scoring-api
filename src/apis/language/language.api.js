@@ -10,8 +10,7 @@ const mysqlDb = new MysqlDB();
 const languageController = new LanguageController(mysqlDb);
 const languageApi = express.Router();
 
-languageApi.get('/', verifyToken, (req, res) => {
-  const { userId } = req;
+languageApi.get('/', (req, res) => {
   languageController
     .getAll()
     .then((result) => res.status(200).json(result))
