@@ -53,51 +53,65 @@ exerciseApi.get('/detail/:exerciseId', (req, res) => {
     .catch((error) => res.status(error?.status || 500).json({ message: error?.message || error }));
 });
 
-exerciseApi.post('/run/:exerciseId', verifyToken, multerUpload.single('code'), (req, res) => {
-  const { userId } = req;
-  const codeFile = req?.file;
-  const { exerciseId } = req.params;
-  const { scriptCode, languageId } = req.body;
+exerciseApi.post(
+  '/run/:exerciseId',
+  verifyToken,
+  multerUpload.codeUpload.single('code'),
+  (req, res) => {
+    const { userId } = req;
+    const codeFile = req?.file;
+    const { exerciseId } = req.params;
+    const { scriptCode, languageId } = req.body;
 
-  if (!codeFile) {
-    return res.status(500).json({ message: 'Không tìm thấy file' });
+    if (!codeFile) {
+      return res.status(500).json({ message: 'Không tìm thấy file' });
+    }
+
+    exerciseController
+      .runOrSubmitExercise({
+        exerciseId,
+        userId,
+        scriptCode,
+        codeFilePath: codeFile.path,
+        languageId,
+        typeRunOrSubmit: RUN_SUBMIT_EXERCISE_TYPE.run,
+      })
+      .then((result) => res.status(200).json(result))
+      .catch((error) =>
+        res.status(error?.status || 500).json({ message: error?.message || error })
+      );
   }
+);
 
-  exerciseController
-    .runOrSubmitExercise({
-      exerciseId,
-      userId,
-      scriptCode,
-      codeFilePath: codeFile.path,
-      languageId,
-      typeRunOrSubmit: RUN_SUBMIT_EXERCISE_TYPE.run,
-    })
-    .then((result) => res.status(200).json(result))
-    .catch((error) => res.status(error?.status || 500).json({ message: error?.message || error }));
-});
+exerciseApi.post(
+  '/submit/:exerciseId',
+  verifyToken,
+  multerUpload.codeUpload.single('code'),
+  (req, res) => {
+    const { userId } = req;
+    const codeFile = req?.file;
+    const { exerciseId } = req.params;
+    const { scriptCode, languageId } = req.body;
 
-exerciseApi.post('/submit/:exerciseId', verifyToken, multerUpload.single('code'), (req, res) => {
-  const { userId } = req;
-  const codeFile = req?.file;
-  const { exerciseId } = req.params;
-  const { scriptCode, languageId } = req.body;
+    if (!codeFile) {
+      return res.status(500).json({ message: 'Không tìm thấy file' });
+    }
 
-  if (!codeFile) {
-    return res.status(500).json({ message: 'Không tìm thấy file' });
+    exerciseController
+      .runOrSubmitExercise({
+        exerciseId,
+        userId,
+        scriptCode,
+        codeFilePath: codeFile.path,
+        languageId,
+        typeRunOrSubmit: RUN_SUBMIT_EXERCISE_TYPE.submit,
+      })
+      .then((result) => res.status(200).json(result))
+      .catch((error) =>
+        res.status(error?.status || 500).json({ message: error?.message || error })
+      );
   }
-
-  exerciseController
-    .runOrSubmitExercise({
-      exerciseId,
-      userId,
-      scriptCode,
-      codeFilePath: codeFile.path,
-      languageId,
-      typeRunOrSubmit: RUN_SUBMIT_EXERCISE_TYPE.submit,
-    })
-    .then((result) => res.status(200).json(result))
-    .catch((error) => res.status(error?.status || 500).json({ message: error?.message || error }));
-});
+);
 
 exerciseApi.put(
   '/update/:exerciseId',
