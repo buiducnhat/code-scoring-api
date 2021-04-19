@@ -147,7 +147,7 @@ class ExerciseController {
     });
   }
 
-  getExerciseDetail({ exerciseId }) {
+  getExerciseDetail({ userId, exerciseId }) {
     return new Promise(async (resolve, reject) => {
       try {
         // find languages
@@ -181,10 +181,16 @@ class ExerciseController {
         const testCasesFounded = await this.mysqlDb.poolQuery(query);
 
         // Only return half of test case, the rest are hidden
+        // If req user id is author, return all test case
+        let isAuthor = exerciseFounded.created_by === (userId || null);
         exerciseFounded.testCases = [];
         testCasesFounded.forEach((testCase, index) => {
           if (index < Math.floor(testCasesFounded.length / 2)) {
             exerciseFounded.testCases.push(testCase);
+          } else {
+            if (isAuthor) {
+              exerciseFounded.testCases.push(testCase);
+            }
           }
         });
 
