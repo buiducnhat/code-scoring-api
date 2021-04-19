@@ -347,6 +347,7 @@ class ExerciseController {
           return reject({ status: 404, message: 'Không tìm thấy bài tập này' });
         }
         const exerciseDetail = exercisesFounded[0];
+        let isAuthor = exerciseDetail.created_by === (userId || null);
 
         query = `
           SELECT * FROM language 
@@ -401,7 +402,9 @@ class ExerciseController {
 
         // If type is just run code, resolve here
         if (typeRunOrSubmit === RUN_SUBMIT_EXERCISE_TYPE.run) {
-          return resolve(resultRunTestCases.slice(0, Math.floor(resultRunTestCases.length / 2)));
+          return isAuthor
+            ? resolve(resultRunTestCases)
+            : resolve(resultRunTestCases.slice(0, Math.floor(resultRunTestCases.length / 2)));
         }
 
         // Begin transaction
