@@ -150,13 +150,18 @@ class ExerciseController {
   getExerciseDetail({ exerciseId }) {
     return new Promise(async (resolve, reject) => {
       try {
+        // find languages
         let query = `
+          SELECT * FROM language
+        `;
+        const languagesFounded = await this.mysqlDb.poolQuery(query);
+
+        query = `
           SELECT e.exercise_id, e.title, e.content, e.point, e.created_by, e.status, e.created_at,
-          u.name AS author, e.updated_at, GROUP_CONCAT(l.name) AS language
+          u.name AS author, e.updated_at
           FROM exercise AS e
           JOIN user AS u ON e.created_by = u.user_id
           JOIN exercise_has_language AS ehl ON e.exercise_id = ehl.exercise_id
-          JOIN language AS l ON ehl.language_id = l.language_id
           WHERE e.exercise_id = ${mysql.escape(exerciseId)}
           GROUP BY e.exercise_id
         `;
@@ -166,6 +171,7 @@ class ExerciseController {
         }
         const exerciseFounded = exercisesFounded[0];
 
+        // find testcases
         query = `
           SELECT test_case_id, test_case_index, input, output, limited_time
           FROM test_case
@@ -181,6 +187,8 @@ class ExerciseController {
             exerciseFounded.testCases.push(testCase);
           }
         });
+
+        exerciseFounded.languages = languagesFounded.map((language) => language.language_id);
 
         return resolve(exerciseFounded);
       } catch (error) {
