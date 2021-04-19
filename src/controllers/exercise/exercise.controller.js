@@ -33,6 +33,9 @@ class ExerciseController {
         const exerciseId = insertExerciseResult.insertId;
 
         // Insert into table exercise_has_language
+        if (!languages.length) {
+          return reject({ status: 400, message: `Ngôn ngữ không được trống` });
+        }
         let exerciseLanguageValue = ``;
         languages.forEach((languageId, index) => {
           if (index !== languages.length - 1) {
@@ -50,6 +53,9 @@ class ExerciseController {
 
         // Insert test cases
         let testCasesValue = ``;
+        if (!testCases.length) {
+          return reject({ status: 400, message: `Test cases không được trống` });
+        }
         testCases.forEach((testCase, index) => {
           if (index !== testCases.length - 1) {
             testCasesValue += `(${mysql.escape(index + 1)},${mysql.escape(
