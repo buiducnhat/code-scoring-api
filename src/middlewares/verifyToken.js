@@ -41,7 +41,7 @@ const verifyTokenNotRequired = (req, res, next) => {
   const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY || 'test';
   jwt.verify(token, JWT_SECRET_KEY, (err, decoded) => {
     if (err) {
-      return res.status(403).json({ message: 'Not authenticated' });
+      return next();
     }
     req.userId = decoded.userId;
     next();
