@@ -57,14 +57,11 @@ class ExerciseController {
           return reject({ status: 400, message: `Test cases không được trống` });
         }
         testCases.forEach((testCase, index) => {
+          testCasesValue += `(${mysql.escape(testCase.input)}, 
+          ${mysql.escape(testCase.output)},${mysql.escape(testCase?.limitedTime)},
+           ${mysql.escape(exerciseId)})`;
           if (index !== testCases.length - 1) {
-            testCasesValue += `${mysql.escape(testCase.input)}, ${mysql.escape(
-              testCase.output
-            )},${mysql.escape(testCase?.limitedTime)}, ${mysql.escape(exerciseId)}), `;
-          } else {
-            testCasesValue += `${mysql.escape(testCase.input)}, ${mysql.escape(
-              testCase.output
-            )},${mysql.escape(testCase?.limitedTime)}, ${mysql.escape(exerciseId)})`;
+            testCasesValue += `,`;
           }
         });
 
@@ -266,16 +263,14 @@ class ExerciseController {
         // Insert test cases query
         let testCasesValue = ``;
         testCases.forEach((testCase, index) => {
+          testCasesValue += `(${mysql.escape(testCase.input)},
+          ${mysql.escape(testCase.output)},${mysql.escape(testCase?.limitedTime)}, 
+          ${mysql.escape(exerciseId)})`;
           if (index !== testCases.length - 1) {
-            testCasesValue += `${mysql.escape(testCase.input)}, ${mysql.escape(
-              testCase.output
-            )},${mysql.escape(testCase?.limitedTime)}, ${mysql.escape(exerciseId)}), `;
-          } else {
-            testCasesValue += `${mysql.escape(testCase.input)}, ${mysql.escape(
-              testCase.output
-            )},${mysql.escape(testCase?.limitedTime)}, ${mysql.escape(exerciseId)})`;
+            testCasesValue += `,`;
           }
         });
+
         // Insert new testcases
         query = `
           INSERT INTO test_case(input, output, limited_time, exercise_id)
