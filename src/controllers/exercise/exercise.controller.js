@@ -58,22 +58,18 @@ class ExerciseController {
         }
         testCases.forEach((testCase, index) => {
           if (index !== testCases.length - 1) {
-            testCasesValue += `(${mysql.escape(index + 1)},${mysql.escape(
-              testCase.input
-            )}, ${mysql.escape(testCase.output)},${mysql.escape(
-              testCase?.limitedTime
-            )}, ${mysql.escape(exerciseId)}), `;
+            testCasesValue += `${mysql.escape(testCase.input)}, ${mysql.escape(
+              testCase.output
+            )},${mysql.escape(testCase?.limitedTime)}, ${mysql.escape(exerciseId)}), `;
           } else {
-            testCasesValue += `(${mysql.escape(index + 1)},${mysql.escape(
-              testCase.input
-            )}, ${mysql.escape(testCase.output)},${mysql.escape(
-              testCase?.limitedTime
-            )}, ${mysql.escape(exerciseId)})`;
+            testCasesValue += `${mysql.escape(testCase.input)}, ${mysql.escape(
+              testCase.output
+            )},${mysql.escape(testCase?.limitedTime)}, ${mysql.escape(exerciseId)})`;
           }
         });
 
         query = `
-          INSERT INTO test_case(test_case_index, input, output, limited_time, exercise_id)
+          INSERT INTO test_case(input, output, limited_time, exercise_id)
           VALUES ${testCasesValue}
         `;
         await this.mysqlDb.query(query);
@@ -179,10 +175,10 @@ class ExerciseController {
 
         // find testcases
         query = `
-          SELECT test_case_id, test_case_index, input, output, limited_time
+          SELECT test_case_id, input, output, limited_time
           FROM test_case
           WHERE exercise_id = ${mysql.escape(exerciseId)}
-          ORDER BY test_case_index
+          ORDER BY created_at
         `;
         const testCasesFounded = await this.mysqlDb.poolQuery(query);
 
@@ -271,22 +267,18 @@ class ExerciseController {
         let testCasesValue = ``;
         testCases.forEach((testCase, index) => {
           if (index !== testCases.length - 1) {
-            testCasesValue += `(${mysql.escape(index + 1)},${mysql.escape(
-              testCase.input
-            )}, ${mysql.escape(testCase.output)},${mysql.escape(
-              testCase?.limitedTime
-            )}, ${mysql.escape(exerciseId)}), `;
+            testCasesValue += `${mysql.escape(testCase.input)}, ${mysql.escape(
+              testCase.output
+            )},${mysql.escape(testCase?.limitedTime)}, ${mysql.escape(exerciseId)}), `;
           } else {
-            testCasesValue += `(${mysql.escape(index + 1)},${mysql.escape(
-              testCase.input
-            )}, ${mysql.escape(testCase.output)},${mysql.escape(
-              testCase?.limitedTime
-            )}, ${mysql.escape(exerciseId)})`;
+            testCasesValue += `${mysql.escape(testCase.input)}, ${mysql.escape(
+              testCase.output
+            )},${mysql.escape(testCase?.limitedTime)}, ${mysql.escape(exerciseId)})`;
           }
         });
         // Insert new testcases
         query = `
-          INSERT INTO test_case(test_case_index, input, output, limited_time, exercise_id)
+          INSERT INTO test_case(input, output, limited_time, exercise_id)
           VALUES ${testCasesValue}
         `;
         await this.mysqlDb.query(query);

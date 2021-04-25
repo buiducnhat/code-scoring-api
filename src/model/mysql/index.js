@@ -19,6 +19,22 @@ class MysqlDB {
       password: dbSettings.password,
       database: dbSettings.database,
     });
+
+    this.connection.on('error', (err) => {
+      logger.error(`[model][mysql] error:`, err);
+      if (err.fatal) {
+        this.create_connection();
+      }
+    });
+  }
+
+  create_connection() {
+    this.connection = mysql.createConnection({
+      host: dbSettings.host,
+      user: dbSettings.user,
+      password: dbSettings.password,
+      database: dbSettings.database,
+    });
   }
 
   beginTransaction() {
