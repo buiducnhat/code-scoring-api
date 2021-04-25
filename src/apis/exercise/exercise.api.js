@@ -32,7 +32,7 @@ exerciseApi.post(
         content,
         point,
         createdBy: userId,
-        status: EXERCISE_STATUS.hiden,
+        status: EXERCISE_STATUS.public,
         testCases,
         languages,
       })
@@ -138,7 +138,7 @@ exerciseApi.put(
         point,
         createdBy,
         testCases,
-        status: status || EXERCISE_STATUS.hiden,
+        status: status || EXERCISE_STATUS.public,
         languages,
       })
       .then((result) => res.status(200).json(result))
@@ -148,7 +148,7 @@ exerciseApi.put(
   }
 );
 
-exerciseApi.post(
+exerciseApi.put(
   '/status/:exerciseId',
   verifyToken,
   checkPermission(mysqlDb, PERMISSION.updateExercise),
