@@ -127,7 +127,7 @@ class ExerciseController {
             orderTypeString = `created_at DESC`;
         }
 
-        const titleFilterQuery = title ? `WHERE title LIKE '%${title}%'` : '';
+        const titleFilterQuery = title ? `AND title LIKE '%${title}%'` : '';
         let query = `
           SELECT e.exercise_id, e.title, e.content, e.point, e.created_by, e.status, e.created_at, e.updated_at,
           u.name AS author, GROUP_CONCAT(l.name) AS language
@@ -135,6 +135,7 @@ class ExerciseController {
           JOIN user AS u ON e.created_by = u.user_id
           JOIN exercise_has_language AS ehl ON e.exercise_id = ehl.exercise_id
           JOIN language AS l ON ehl.language_id = l.language_id
+          WHERE 1
           ${titleFilterQuery}
           AND (status = ${mysql.escape(EXERCISE_STATUS.public)}
             OR e.created_by = ${mysql.escape(userId)}
