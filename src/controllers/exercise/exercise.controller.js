@@ -151,7 +151,8 @@ class ExerciseController {
       try {
         // find languages
         let query = `
-          SELECT * FROM language
+          SELECT language_id FROM exercise_has_language
+          WHERE exercise_id = ${mysql.escape(exerciseId)} 
         `;
         const languagesFounded = await this.mysqlDb.poolQuery(query);
 
@@ -234,10 +235,9 @@ class ExerciseController {
         // Insert into table exercise_has_language
         let exerciseLanguageValue = ``;
         languages.forEach((languageId, index) => {
+          exerciseLanguageValue += `(${mysql.escape(exerciseId)}, ${mysql.escape(languageId)})`;
           if (index !== languages.length - 1) {
-            exerciseLanguageValue += `(${mysql.escape(exerciseId)}, ${mysql.escape(languageId)}), `;
-          } else {
-            exerciseLanguageValue += `(${mysql.escape(exerciseId)}, ${mysql.escape(languageId)})`;
+            exerciseLanguageValue += `,`;
           }
         });
         query = `
