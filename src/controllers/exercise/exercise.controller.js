@@ -3,7 +3,12 @@
 const mysql = require('mysql');
 
 const logger = require('../../logger');
-const { ORDER_TYPE, LANGUAGE_CODE, RUN_SUBMIT_EXERCISE_TYPE } = require('../../config/constants');
+const {
+  ORDER_TYPE,
+  LANGUAGE_CODE,
+  RUN_SUBMIT_EXERCISE_TYPE,
+  EXERCISE_STATUS,
+} = require('../../config/constants');
 const { c, cpp, java, python, node } = require('compile-run');
 const fs = require('fs/promises');
 class ExerciseController {
@@ -91,7 +96,7 @@ class ExerciseController {
     });
   }
 
-  listExercise({ page, pageSize, title, orderType }) {
+  listExercise({ userId, page, pageSize, title, orderType }) {
     return new Promise(async (resolve, reject) => {
       try {
         page = parseInt(page) || 1;
@@ -131,6 +136,9 @@ class ExerciseController {
           JOIN exercise_has_language AS ehl ON e.exercise_id = ehl.exercise_id
           JOIN language AS l ON ehl.language_id = l.language_id
           ${titleFilterQuery}
+          AND (status = ${mysql.escape(EXERCISE_STATUS.public)}
+            OR e.created_by = ${mysql.escape(userId)}
+          )
           GROUP BY e.exercise_id
           ORDER BY ${orderTypeString}
           LIMIT ${mysql.escape(pageSize)}
@@ -163,6 +171,9 @@ class ExerciseController {
           JOIN user AS u ON e.created_by = u.user_id
           JOIN exercise_has_language AS ehl ON e.exercise_id = ehl.exercise_id
           WHERE e.exercise_id = ${mysql.escape(exerciseId)}
+          AND (e.status = ${mysql.escape(EXERCISE_STATUS.public)}
+            OR e.created_by = ${mysql.escape(userId)}
+          )
           GROUP BY e.exercise_id
         `;
         const exercisesFounded = await this.mysqlDb.poolQuery(query);

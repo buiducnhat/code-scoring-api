@@ -43,10 +43,11 @@ exerciseApi.post(
   }
 );
 
-exerciseApi.get('/list', (req, res) => {
+exerciseApi.get('/list', verifyTokenNotRequired, (req, res) => {
   const { page, pageSize, title, order } = req.query;
+  const { userId } = req;
   exerciseController
-    .listExercise({ page, pageSize, title, orderType: order })
+    .listExercise({ userId, page, pageSize, title, orderType: order })
     .then((result) => res.status(200).json(result))
     .catch((error) => res.status(error?.status || 500).json({ message: error?.message || error }));
 });
