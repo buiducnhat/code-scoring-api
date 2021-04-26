@@ -256,7 +256,7 @@ class ExerciseController {
         }
 
         // check valid languages array
-        if (!(language?.length || language?.length > 0)) {
+        if (!(languages?.length || language?.length > 0)) {
           return reject({ status: 400, message: `Ngôn ngữ không được để trống` });
         }
         // delete all language-exercise before inserting news
