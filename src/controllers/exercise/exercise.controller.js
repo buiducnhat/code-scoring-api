@@ -128,7 +128,23 @@ class ExerciseController {
         }
 
         const titleFilterQuery = title ? `AND title LIKE '%${title}%'` : '';
+
+        // count exercise for pagination
         let query = `
+          SELECT COUNT(e.exercise_id) AS countExercises
+          FROM exercise AS e
+          WHERE 1
+          ${titleFilterQuery}
+          AND (status = ${mysql.escape(EXERCISE_STATUS.public)}
+            OR e.created_by = ${mysql.escape(userId)}
+          )
+          ORDER BY ${orderTypeString}
+          LIMIT ${mysql.escape(pageSize)}
+          OFFSET ${mysql.escape(offset)}
+        `;
+        const countExerciseResult = await this.mysqlDb.poolQuery(query);
+
+        query = `
           SELECT e.exercise_id, e.title, e.content, e.point, e.created_by, e.status, e.created_at, e.updated_at,
           u.name AS author, GROUP_CONCAT(l.name) AS language
           FROM exercise AS e
@@ -146,6 +162,7 @@ class ExerciseController {
           OFFSET ${mysql.escape(offset)}
         `;
         const exercisesFounded = await this.mysqlDb.poolQuery(query);
+        exercisesFounded.total = countExerciseResult[0].countExercise;
 
         return resolve(exercisesFounded);
       } catch (error) {
