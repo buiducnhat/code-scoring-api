@@ -151,6 +151,7 @@ class ExerciseController {
           JOIN language AS l ON ehl.language_id = l.language_id
           WHERE 1
           ${titleFilterQuery}
+          AND status <> ${mysql.escape(EXERCISE_STATUS.deleted)}
           AND (status = ${mysql.escape(EXERCISE_STATUS.public)}
             OR e.created_by = ${mysql.escape(userId)}
           )
@@ -189,6 +190,7 @@ class ExerciseController {
           JOIN user AS u ON e.created_by = u.user_id
           JOIN exercise_has_language AS ehl ON e.exercise_id = ehl.exercise_id
           WHERE e.exercise_id = ${mysql.escape(exerciseId)}
+          AND status <> ${mysql.escape(EXERCISE_STATUS.deleted)}
           AND (e.status = ${mysql.escape(EXERCISE_STATUS.public)}
             OR e.created_by = ${mysql.escape(userId)}
           )
