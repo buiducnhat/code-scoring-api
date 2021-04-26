@@ -138,9 +138,6 @@ class ExerciseController {
           AND (status = ${mysql.escape(EXERCISE_STATUS.public)}
             OR e.created_by = ${mysql.escape(userId)}
           )
-          ORDER BY ${orderTypeString}
-          LIMIT ${mysql.escape(pageSize)}
-          OFFSET ${mysql.escape(offset)}
         `;
         const countExerciseResult = await this.mysqlDb.poolQuery(query);
         console.log(countExerciseResult);
