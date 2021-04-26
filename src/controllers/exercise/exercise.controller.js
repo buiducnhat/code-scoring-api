@@ -162,9 +162,11 @@ class ExerciseController {
           OFFSET ${mysql.escape(offset)}
         `;
         const exercisesFounded = await this.mysqlDb.poolQuery(query);
-        exercisesFounded.total = countExerciseResult[0].countExercise;
 
-        return resolve(exercisesFounded);
+        return resolve({
+          total: countExerciseResult[0].countExercise,
+          exercises: exercisesFounded,
+        });
       } catch (error) {
         logger.error(`[exercise.controller][listExercises] error:`, error);
         return reject(error?.sqlMessage || error);
