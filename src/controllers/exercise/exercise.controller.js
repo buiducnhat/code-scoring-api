@@ -38,7 +38,7 @@ class ExerciseController {
         const exerciseId = insertExerciseResult.insertId;
 
         // Insert into table exercise_has_language
-        if (!languages.length) {
+        if (!(languages?.length || languages?.length > 0)) {
           return reject({ status: 400, message: `Ngôn ngữ không được trống` });
         }
         let exerciseLanguageValue = ``;
@@ -58,7 +58,7 @@ class ExerciseController {
 
         // Insert test cases
         let testCasesValue = ``;
-        if (!testCases.length) {
+        if (!(testCases?.length || testCases?.length > 0)) {
           return reject({ status: 400, message: `Test cases không được trống` });
         }
         testCases.forEach((testCase, index) => {
@@ -69,7 +69,6 @@ class ExerciseController {
             testCasesValue += `,`;
           }
         });
-
         query = `
           INSERT INTO test_case(input, output, limited_time, exercise_id)
           VALUES ${testCasesValue}
@@ -256,6 +255,10 @@ class ExerciseController {
           return reject({ status: 404, message: `Bài tập không tồn tại` });
         }
 
+        // check valid languages array
+        if (!(language?.length || language?.length > 0)) {
+          return reject({ status: 400, message: `Ngôn ngữ không được để trống` });
+        }
         // delete all language-exercise before inserting news
         query = `
           DELETE FROM exercise_has_language
@@ -284,6 +287,10 @@ class ExerciseController {
         `;
         await this.mysqlDb.query(query);
 
+        // Check valid testCases
+        if (!(testCases?.length || testCases?.length > 0)) {
+          return reject({ status: 400, message: `Test cases không được trống` });
+        }
         // Delete all testcases before inserting new
         query = `
           DELETE FROM test_case
@@ -301,7 +308,6 @@ class ExerciseController {
             testCasesValue += `,`;
           }
         });
-
         // Insert new testcases
         query = `
           INSERT INTO test_case(input, output, limited_time, exercise_id)
