@@ -131,7 +131,7 @@ class ExerciseController {
 
         // count exercise for pagination
         let query = `
-          SELECT COUNT(e.exercise_id) AS countExercises
+          SELECT COUNT(e.exercise_id) AS countExercise
           FROM exercise AS e
           WHERE 1
           ${titleFilterQuery}
