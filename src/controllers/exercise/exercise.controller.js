@@ -143,6 +143,7 @@ class ExerciseController {
           OFFSET ${mysql.escape(offset)}
         `;
         const countExerciseResult = await this.mysqlDb.poolQuery(query);
+        console.log(countExerciseResult);
 
         query = `
           SELECT e.exercise_id, e.title, e.content, e.point, e.created_by, e.status, e.created_at, e.updated_at,
@@ -164,7 +165,7 @@ class ExerciseController {
         const exercisesFounded = await this.mysqlDb.poolQuery(query);
 
         return resolve({
-          total: countExerciseResult[0].countExercise,
+          total: countExerciseResult.length ? countExerciseResult[0].countExercise : 0,
           exercises: exercisesFounded,
         });
       } catch (error) {
