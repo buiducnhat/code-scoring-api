@@ -134,6 +134,7 @@ class ExerciseController {
           FROM exercise AS e
           WHERE 1
           ${titleFilterQuery}
+          AND status <> ${mysql.escape(EXERCISE_STATUS.deleted)}
           AND (status = ${mysql.escape(EXERCISE_STATUS.public)}
             OR e.created_by = ${mysql.escape(userId)}
           )
