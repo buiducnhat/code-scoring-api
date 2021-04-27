@@ -126,9 +126,13 @@ class AuthController {
     return new Promise(async (resolve, reject) => {
       try {
         const query = `
-          SELECT *
-          FROM user 
-          WHERE user_id = ${mysql.escape(userId)}
+          SELECT u.user_id, u.name, u.avatar, u.role_id, u.is_delete, GROUP_CONCAT(p.title)
+          FROM user AS u
+          JOIN role AS r ON u.role_id = r.role_id
+          JOIN role_has_permission AS rhp ON r.role_id = rhp.role_id
+          JOIN permission AS p ON rhp.permission_id = p.permission_id
+          GROUP BY u.user_id
+          WHERE u.user_id = ${userId}
         `;
 
         const usersFounded = await this.mysqlDb.poolQuery(query);
