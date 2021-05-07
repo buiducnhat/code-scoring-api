@@ -27,7 +27,7 @@ class ResultController {
         }
 
         query = `
-          SELECT tc.test_case_id, tc.test_case_index, tc.input, tc.output, tc.limited_time,
+          SELECT tc.test_case_id, tc.input, tc.output, tc.limited_time,
           tc.exercise_id, r.user_output
           FROM test_case AS tc
           JOIN result AS r ON tc.test_case_id = r.test_case_id
@@ -43,7 +43,6 @@ class ResultController {
             if (testCase.exercise_id === result.exercise_id) {
               tempResult.testCases.push({
                 testCaseId: testCase.test_case_id,
-                testCaseIndex: testCase.test_case_index,
                 input: testCase.input,
                 output: testCase.output,
                 userOutput: testCase.user_output,
@@ -68,7 +67,7 @@ class ResultController {
       try {
         let query = `
           SELECT r.user_id AS userId, r.exercise_id AS exerciseId, SUM(score) AS totalScore,
-          e.title, e.point, e.status 
+          e.title, e.point, e.status, e.created_by
           FROM result AS r
           JOIN exercise AS e ON r.exercise_id = e.exercise_id
           WHERE r.user_id = ${mysql.escape(userId)} 
@@ -83,16 +82,20 @@ class ResultController {
         let resultFounded = resultsFounded[0];
 
         query = `
-          SELECT tc.test_case_id, tc.test_case_index, tc.input, tc.output, tc.limited_time,
+          SELECT tc.test_case_id, tc.input, tc.output, tc.limited_time,
           tc.exercise_id, r.user_output
           FROM test_case AS tc
           JOIN result AS r ON tc.test_case_id = r.test_case_id
           WHERE tc.exercise_id = ${mysql.escape(exerciseId)}
+          AND r.user_id = ${userId}
         `;
         let testCases = await this.mysqlDb.poolQuery(query);
+        let testCasesLength = testCases.length;
+        if (userId !== resultsFounded[0].created_by) {
+          testCases = testCases.slice(0, Math.floor(testCasesLength / 2));
+        }
         testCases = testCases.map((testCase) => ({
           testCaseId: testCase.test_case_id,
-          testCaseIndex: testCase.test_case_index,
           input: testCase.input,
           output: testCase.output,
           userOutput: testCase.user_output,
