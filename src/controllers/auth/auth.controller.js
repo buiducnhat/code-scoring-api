@@ -131,8 +131,8 @@ class AuthController {
           JOIN role AS r ON u.role_id = r.role_id
           JOIN role_has_permission AS rhp ON r.role_id = rhp.role_id
           JOIN permission AS p ON rhp.permission_id = p.permission_id
+          WHERE u.user_id = ${mysql.escape(userId)}
           GROUP BY u.user_id
-          WHERE u.user_id = ${userId}
         `;
 
         const usersFounded = await this.mysqlDb.poolQuery(query);

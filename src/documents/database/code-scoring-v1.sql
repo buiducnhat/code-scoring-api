@@ -150,7 +150,6 @@ DROP TABLE IF EXISTS `test_case`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `test_case` (
   `test_case_id` int NOT NULL AUTO_INCREMENT,
-  `test_case_index` int NOT NULL,
   `input` longtext NOT NULL,
   `output` longtext NOT NULL,
   `limited_time` double DEFAULT NULL,
