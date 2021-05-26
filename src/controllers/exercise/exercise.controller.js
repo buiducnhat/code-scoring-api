@@ -140,7 +140,6 @@ class ExerciseController {
           )
         `;
         const countExerciseResult = await this.mysqlDb.poolQuery(query);
-        console.log(countExerciseResult);
 
         query = `
           SELECT e.exercise_id, e.title, e.content, e.point, e.created_by, e.status, e.created_at, e.updated_at,
