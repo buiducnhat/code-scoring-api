@@ -143,7 +143,7 @@ class ExerciseController {
 
         query = `
           SELECT e.exercise_id, e.title, e.content, e.point, e.created_by, e.status, e.created_at, e.updated_at,
-          u.name AS author, GROUP_CONCAT(l.name) AS language
+          u.name AS author, u.avatar AS author_avatar, GROUP_CONCAT(l.name) AS language
           FROM exercise AS e
           JOIN user AS u ON e.created_by = u.user_id
           JOIN exercise_has_language AS ehl ON e.exercise_id = ehl.exercise_id
@@ -184,10 +184,10 @@ class ExerciseController {
 
         query = `
           SELECT e.exercise_id, e.title, e.content, e.point, e.created_by, e.status, e.created_at,
-          u.name AS author, e.updated_at
+          u.name AS author, e.updated_at, u.avatar AS author_avatar
           FROM exercise AS e
           JOIN user AS u ON e.created_by = u.user_id
-          JOIN exercise_has_language AS ehl ON e.exercise_id = ehl.exercise_id
+          LEFT JOIN exercise_has_language AS ehl ON e.exercise_id = ehl.exercise_id
           WHERE e.exercise_id = ${mysql.escape(exerciseId)}
           AND status <> ${mysql.escape(EXERCISE_STATUS.deleted)}
           AND (e.status = ${mysql.escape(EXERCISE_STATUS.public)}
