@@ -222,7 +222,7 @@ class ExerciseController {
         let isAuthor = exerciseFounded.created_by === (userId || null);
         exerciseFounded.testCases = [];
         testCasesFounded.forEach((testCase, index) => {
-          if (index < Math.floor(testCasesFounded.length / 2)) {
+          if (index < Math.ceil(testCasesFounded.length / 2)) {
             exerciseFounded.testCases.push(testCase);
           } else {
             if (isAuthor) {
@@ -448,7 +448,7 @@ class ExerciseController {
         if (typeRunOrSubmit === RUN_SUBMIT_EXERCISE_TYPE.run) {
           return isAuthor
             ? resolve(resultRunTestCases)
-            : resolve(resultRunTestCases.slice(0, Math.floor(resultRunTestCases.length / 2)));
+            : resolve(resultRunTestCases.slice(0, Math.ceil(resultRunTestCases.length / 2)));
         }
 
         // Begin transaction
