@@ -1,7 +1,7 @@
 const util = require('util');
 const mysql = require('mysql');
 
-const {dbSettings} = require('../../config');
+const { dbSettings } = require('../../config');
 const logger = require('../../logger');
 
 class MysqlDB {
@@ -77,17 +77,7 @@ class MysqlDB {
   }
 
   close() {
-    return new Promise((resolve, reject) => {
-      const end_connection = util.promisify(this.connection.end).call(this.connection);
-      end_connection
-        .then((result) => {
-          return resolve(result)
-        })
-        .catch((error) => {
-          logger.error(error);
-          this.reconnect();
-        });
-    });
+    return util.promisify(this.connection.end).call(this.connection);
   }
 }
 
