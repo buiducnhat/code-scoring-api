@@ -1,7 +1,8 @@
 const util = require('util');
 const mysql = require('mysql');
 
-const { dbSettings } = require('../../config');
+const {dbSettings} = require('../../config');
+const logger = require('../../logger');
 
 class MysqlDB {
   constructor() {
@@ -19,13 +20,6 @@ class MysqlDB {
       password: dbSettings.password,
       database: dbSettings.database,
     });
-
-    this.connection.on('error', (err) => {
-      logger.error(`[model][mysql] error:`, err);
-      if (err.fatal) {
-        this.create_connection();
-      }
-    });
   }
 
   create_connection() {
@@ -34,6 +28,31 @@ class MysqlDB {
       user: dbSettings.user,
       password: dbSettings.password,
       database: dbSettings.database,
+    });
+  }
+
+  reconnect() {
+    //- Destroy the current connection variable
+    if (this.connection) this.connection.destroy();
+
+    //- Create a new one
+    this.connection = mysql.createConnection({
+      host: dbSettings.host,
+      user: dbSettings.user,
+      password: dbSettings.password,
+      database: dbSettings.database,
+    });
+
+    //- Try to reconnect
+    this.connection.connect((err) => {
+      if (err) {
+        //- Try to connect every 2 seconds.
+        setTimeout(reconnect, 2000);
+      } else {
+        logger.info(
+          '\n\t *** Reconnection successfully. New connection established with the database. ***'
+        );
+      }
     });
   }
 
@@ -58,7 +77,17 @@ class MysqlDB {
   }
 
   close() {
-    return util.promisify(this.connection.end).call(this.connection);
+    return new Promise((resolve, reject) => {
+      const end_connection = util.promisify(this.connection.end).call(this.connection);
+      end_connection
+        .then((result) => {
+          return resolve(result)
+        })
+        .catch((error) => {
+          logger.error(error);
+          this.reconnect();
+        });
+    });
   }
 }
 

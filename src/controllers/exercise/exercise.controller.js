@@ -91,6 +91,8 @@ class ExerciseController {
         await this.mysqlDb.rollback();
         logger.error(`[exercise.controller][createExercise] error:`, error);
         return reject(error?.sqlMessage || error);
+      } finally {
+        await this.mysqlDb.close();
       }
     });
   }
@@ -331,6 +333,8 @@ class ExerciseController {
         await this.mysqlDb.rollback();
         logger.error(`[exercise.controller][updateExercise] error:`, error);
         return reject(error?.sqlMessage || error);
+      } finally {
+        await this.mysqlDb.close();
       }
     });
   }
@@ -465,6 +469,8 @@ class ExerciseController {
         await this.mysqlDb.rollback();
         logger.error(`[exercise.controller][submitExercise] error:`, error);
         return reject(error?.sqlMessage || error);
+      } finally {
+        await this.mysqlDb.close();
       }
     });
   }
