@@ -62,7 +62,7 @@ class ExerciseController {
           return reject({ status: 400, message: `Test cases không được trống` });
         }
         testCases.forEach((testCase, index) => {
-          testCasesValue += `(${mysql.escape(testCase.input)}, 
+          testCasesValue += `(${mysql.escape(testCase.input || '')}, 
           ${mysql.escape(testCase.output)},${mysql.escape(testCase?.limitedTime)},
            ${mysql.escape(exerciseId)})`;
           if (index !== testCases.length - 1) {
@@ -308,7 +308,7 @@ class ExerciseController {
         // Insert test cases query
         let testCasesValue = ``;
         testCases.forEach((testCase, index) => {
-          testCasesValue += `(${mysql.escape(testCase.input)},
+          testCasesValue += `(${mysql.escape(testCase.input || '')},
           ${mysql.escape(testCase.output)},${mysql.escape(testCase?.limitedTime)}, 
           ${mysql.escape(exerciseId)})`;
           if (index !== testCases.length - 1) {
